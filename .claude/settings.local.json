@@ -11,7 +11,17 @@
       "mcp__context7__resolve-library-id",
       "mcp__context7__query-docs",
       "Bash(npm view @tailwindcss/vite versions --json)",
-      "Bash(npm install --save-dev @tailwindcss/vite@latest tailwindcss@next)"
+      "Bash(npm install --save-dev @tailwindcss/vite@latest tailwindcss@next)",
+      "Bash(dir)",
+      "Bash(npm run typecheck)",
+      "Bash(npm run lint)",
+      "Bash(npm run test -- --run)",
+      "Bash(cat \"D:\\Code\\Weekplan\\src\\index.css\")",
+      "Bash(cat package.json)",
+      "Bash(for dir in src/components/BlockEditor src/components/common src/components/DayTypePopover src/components/TemplateManager src/components/WeekView src/lib)",
+      "Bash(done)",
+      "Bash(curl -s http://localhost:5173)",
+      "Bash(pkill -f \"vite\")"
     ]
   },
   "enableAllProjectMcpServers": true,
