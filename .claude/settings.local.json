@@ -1,8 +1,23 @@
 {
+  "permissions": {
+    "allow": [
+      "SlashCommand(/material-tokens)",
+      "SlashCommand(/react-ts-patterns)",
+      "Bash(npm install --save-dev vite @vitejs/plugin-react typescript @types/react @types/react-dom)",
+      "Bash(npm install --save-dev vite@^6.4.0 @vitejs/plugin-react typescript@^5.7.0 @types/react@^19.0.0 @types/react-dom@^19.0.0 tailwindcss@next @tailwindcss/vite@next)",
+      "Bash(npm install react@rc react-dom@rc)",
+      "Bash(npm run test:run)",
+      "Bash(npm run build)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__query-docs",
+      "Bash(npm view @tailwindcss/vite versions --json)",
+      "Bash(npm install --save-dev @tailwindcss/vite@latest tailwindcss@next)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "context7",
     "playwright",
     "chrome-devtools"
-  ],
-  "enableAllProjectMcpServers": true
+  ]
 }

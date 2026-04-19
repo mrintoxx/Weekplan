@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+/**
+ * Material 3 Design Tokens injected into :root
+ * Values defined in src/constants/theme.ts and injected at runtime
+ */
+:root {
+  /* Tokens will be injected via theme.ts injectThemeTokens() */
+  /* This ensures all Material 3 tokens are available as CSS custom properties */
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font: var(--md-font-body-md);
+  color: var(--md-on-surface);
+  background: var(--md-surface);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
