@@ -21,7 +21,15 @@
       "Bash(for dir in src/components/BlockEditor src/components/common src/components/DayTypePopover src/components/TemplateManager src/components/WeekView src/lib)",
       "Bash(done)",
       "Bash(curl -s http://localhost:5173)",
-      "Bash(pkill -f \"vite\")"
+      "Bash(pkill -f \"vite\")",
+      "Bash(npx tsc *)",
+      "Bash(npm test *)",
+      "Bash(npx vitest *)",
+      "Bash(npx eslint *)",
+      "Bash(grep -v \"^$\")",
+      "Bash(npm run *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   },
   "enableAllProjectMcpServers": true,
