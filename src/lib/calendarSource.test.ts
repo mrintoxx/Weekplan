@@ -21,25 +21,36 @@ function isoDate(iso: string): string {
 
 describe('CalendarSource interface contract', () => {
   it('MockCalendarSource satisfies the CalendarSource interface at compile-time', () => {
-    // Ce test est un test de contrat TypeScript.
-    // Si CalendarSource ou MockCalendarSource n'est pas exporté, le fichier
-    // ne compilera pas et le test échouera dès la phase de collecte.
-    // La simple écriture de cette assignation garantit la conformité.
     const _typeCheck: CalendarSource = {} as MockCalendarSource;
-    expect(_typeCheck).toBeDefined(); // assertion triviale pour valider l'exécution
+    expect(_typeCheck).toBeDefined();
   });
 });
 
 // ---------------------------------------------------------------------------
 // MockCalendarSource — plage 14 jours
+//
+// Cycle de 5 jours ancré au lundi de la semaine contenant `from`.
+// FROM = '2026-04-13' est un lundi → ancre = '2026-04-13'.
+//
+// offset 0 → Apr 13, 18, 23 … : OFF       (aucun event)
+// offset 1 → Apr 14, 19, 24 … : TRAVAIL   (Shift Jour)
+// offset 2 → Apr 15, 20, 25 … : PRE-NIGHT (Shift Nuit)
+// offset 3 → Apr 16, 21 …     : POST-NIGHT (aucun event)
+// offset 4 → Apr 17, 22 …     : OFF        (aucun event)
 // ---------------------------------------------------------------------------
 
 describe('MockCalendarSource', () => {
   let source: MockCalendarSource;
   const TODAY = '2026-04-20';
-  // 7 jours avant et 6 jours après = 14 jours
-  const FROM = '2026-04-13';
-  const TO = '2026-04-26';
+  const FROM  = '2026-04-13'; // lundi = ancre du cycle
+  const TO    = '2026-04-26';
+
+  // Jours utiles pour les nouveaux tests (relatifs à l'ancre Apr 13)
+  const DAY_OFF       = '2026-04-13'; // offset 0 → OFF
+  const DAY_TRAVAIL   = '2026-04-14'; // offset 1 → TRAVAIL
+  const DAY_NUIT      = '2026-04-15'; // offset 2 → PRE-NIGHT
+  const DAY_POST_NUIT = '2026-04-16'; // offset 3 → POST-NIGHT
+  const DAY_OFF2      = '2026-04-17'; // offset 4 → OFF
 
   beforeEach(async () => {
     const { MockCalendarSource: MCS } = await import('./calendarSource');
@@ -89,7 +100,6 @@ describe('MockCalendarSource', () => {
 
     it('les events sont des CalendarEvent valides (conforme au type)', async () => {
       const events: CalendarEvent[] = await source.fetchEvents(FROM, TO);
-      // Si l'affectation compile et s'exécute, le type est respecté.
       expect(events).toBeDefined();
     });
 
@@ -100,18 +110,18 @@ describe('MockCalendarSource', () => {
         const prev = events[i - 1];
         const curr = events[i];
         expect(new Date(prev!.start).getTime()).toBeLessThanOrEqual(
-          new Date(curr!.start).getTime()
+          new Date(curr!.start).getTime(),
         );
       }
     });
   });
 
   // -------------------------------------------------------------------------
-  // Alternance Shift Jour / Shift Nuit
+  // Structure des shifts Jour / Nuit
   // -------------------------------------------------------------------------
 
-  describe('alternance Shift Jour / Shift Nuit', () => {
-    it('les titres alternent entre "Shift Jour" et "Shift Nuit" sans doublons consécutifs', async () => {
+  describe('structure des shifts Jour / Nuit', () => {
+    it('les titres des events consécutifs alternent entre "Shift Jour" et "Shift Nuit"', async () => {
       const events = await source.fetchEvents(FROM, TO);
 
       for (let i = 1; i < events.length; i++) {
@@ -119,7 +129,7 @@ describe('MockCalendarSource', () => {
       }
     });
 
-    it('le premier shift de la plage est un Shift Jour (commence à 07:00)', async () => {
+    it('le premier event de la plage est un Shift Jour', async () => {
       const events = await source.fetchEvents(FROM, TO);
       const first = events[0];
 
@@ -129,7 +139,7 @@ describe('MockCalendarSource', () => {
 
     it('un Shift Jour commence à 07:00 et se termine à 19:00 le même jour (durée 720 min)', async () => {
       const events = await source.fetchEvents(FROM, TO);
-      const shiftJours = events.filter(e => e.title === 'Shift Jour');
+      const shiftJours = events.filter((e) => e.title === 'Shift Jour');
 
       expect(shiftJours.length).toBeGreaterThan(0);
 
@@ -141,7 +151,7 @@ describe('MockCalendarSource', () => {
 
     it('un Shift Nuit commence à 19:00 et se termine à 07:00 le lendemain (durée 720 min)', async () => {
       const events = await source.fetchEvents(FROM, TO);
-      const shiftNuits = events.filter(e => e.title === 'Shift Nuit');
+      const shiftNuits = events.filter((e) => e.title === 'Shift Nuit');
 
       expect(shiftNuits.length).toBeGreaterThan(0);
 
@@ -152,81 +162,85 @@ describe('MockCalendarSource', () => {
 
     it('les Shifts Nuit ont end sur J+1 par rapport à start', async () => {
       const events = await source.fetchEvents(FROM, TO);
-      const shiftNuits = events.filter(e => e.title === 'Shift Nuit');
+      const shiftNuits = events.filter((e) => e.title === 'Shift Nuit');
 
       expect(shiftNuits.length).toBeGreaterThan(0);
 
       for (const shift of shiftNuits) {
-        const startDate = new Date(shift.start);
-        const endDate = new Date(shift.end);
-
-        // end doit être sur le lendemain (J+1) par rapport à start
-        const startDay = startDate.toISOString().slice(0, 10);
-        const endDay = endDate.toISOString().slice(0, 10);
+        const startDay = new Date(shift.start).toISOString().slice(0, 10);
+        const endDay = new Date(shift.end).toISOString().slice(0, 10);
 
         const startMs = new Date(startDay).getTime();
         const endMs = new Date(endDay).getTime();
 
-        expect(endMs - startMs).toBe(24 * 60 * 60 * 1000); // exactement 1 jour d'écart
+        expect(endMs - startMs).toBe(24 * 60 * 60 * 1000);
       }
     });
   });
 
   // -------------------------------------------------------------------------
-  // Absence de gap entre shifts consécutifs
+  // Cycle réaliste de 5 jours
   // -------------------------------------------------------------------------
 
-  describe('absence de gap entre shifts consécutifs', () => {
-    it("le end d'un shift est exactement egal au start du shift suivant (aucun gap)", async () => {
-      const events = await source.fetchEvents(FROM, TO);
+  describe('cycle réaliste de 5 jours', () => {
+    it('cycle 5 jours : off / travail / pré-nuit / post-nuit / off', async () => {
+      // Ancre = Apr 13 (lundi). Chaque appel mono-journée ancre au lundi de sa semaine.
+      // Apr 13 → Apr 13 ancre, offset 0 = OFF
+      // Apr 14 → Apr 13 ancre, offset 1 = TRAVAIL
+      // Apr 15 → Apr 13 ancre, offset 2 = PRE-NIGHT
+      // Apr 16 → Apr 13 ancre, offset 3 = POST-NIGHT
+      // Apr 17 → Apr 13 ancre, offset 4 = OFF
+      const [offEvents, travailEvents, nuitEvents, postEvents, off2Events] = await Promise.all([
+        source.fetchEvents(DAY_OFF, DAY_TRAVAIL),
+        source.fetchEvents(DAY_TRAVAIL, DAY_NUIT),
+        source.fetchEvents(DAY_NUIT, DAY_POST_NUIT),
+        source.fetchEvents(DAY_POST_NUIT, DAY_OFF2),
+        source.fetchEvents(DAY_OFF2, '2026-04-18'),
+      ]);
 
-      for (let i = 1; i < events.length; i++) {
-        const prev = events[i - 1]!;
-        const curr = events[i]!;
-        const gapMinutes = diffMinutes(prev.end, curr.start);
+      expect(offEvents).toHaveLength(0);
 
-        expect(gapMinutes).toBe(0);
-      }
+      expect(travailEvents).toHaveLength(1);
+      expect(travailEvents[0]!.title).toBe('Shift Jour');
+
+      expect(nuitEvents).toHaveLength(1);
+      expect(nuitEvents[0]!.title).toBe('Shift Nuit');
+
+      expect(postEvents).toHaveLength(0);
+      expect(off2Events).toHaveLength(0);
     });
 
-    it('aucun gap >= 2 heures entre deux shifts consécutifs', async () => {
-      const events = await source.fetchEvents(FROM, TO);
+    it('les jours OFF et POST-NIGHT ne génèrent aucun event', async () => {
+      const offEvents  = await source.fetchEvents(DAY_OFF, DAY_TRAVAIL);        // offset 0
+      const postEvents = await source.fetchEvents(DAY_POST_NUIT, DAY_OFF2);     // offset 3
+      const off2Events = await source.fetchEvents(DAY_OFF2, '2026-04-18');      // offset 4
 
-      for (let i = 1; i < events.length; i++) {
-        const prev = events[i - 1]!;
-        const curr = events[i]!;
-        const gapMinutes = diffMinutes(prev.end, curr.start);
-
-        expect(gapMinutes).toBeLessThan(120);
-      }
+      expect(offEvents).toHaveLength(0);
+      expect(postEvents).toHaveLength(0);
+      expect(off2Events).toHaveLength(0);
     });
 
-    it('le Shift Nuit commence exactement quand le Shift Jour précédent se termine (19:00)', async () => {
-      const events = await source.fetchEvents(FROM, TO);
+    it("un jour TRAVAIL ne génère qu'un seul event (Shift Jour, pas de Shift Nuit ce même jour)", async () => {
+      const events = await source.fetchEvents(DAY_TRAVAIL, DAY_NUIT);
 
-      // Trouver les paires Jour → Nuit
-      for (let i = 0; i < events.length - 1; i++) {
-        const curr = events[i]!;
-        const next = events[i + 1]!;
-
-        if (curr.title === 'Shift Jour' && next.title === 'Shift Nuit') {
-          expect(curr.end).toBe(next.start);
-        }
-      }
+      expect(events).toHaveLength(1);
+      expect(events[0]!.title).toBe('Shift Jour');
+      expect(events.filter((e) => e.title === 'Shift Nuit')).toHaveLength(0);
     });
 
-    it('le Shift Jour commence exactement quand le Shift Nuit précédent se termine (07:00 J+1)', async () => {
+    it('un jour PRE-NIGHT ne génère qu\'un seul event (Shift Nuit, pas de Shift Jour ce même jour)', async () => {
+      const events = await source.fetchEvents(DAY_NUIT, DAY_POST_NUIT);
+
+      expect(events).toHaveLength(1);
+      expect(events[0]!.title).toBe('Shift Nuit');
+      expect(events.filter((e) => e.title === 'Shift Jour')).toHaveLength(0);
+    });
+
+    it('le nombre d\'events sur 14 jours est raisonnable (entre 4 et 8, pas 28)', async () => {
       const events = await source.fetchEvents(FROM, TO);
 
-      // Trouver les paires Nuit → Jour
-      for (let i = 0; i < events.length - 1; i++) {
-        const curr = events[i]!;
-        const next = events[i + 1]!;
-
-        if (curr.title === 'Shift Nuit' && next.title === 'Shift Jour') {
-          expect(curr.end).toBe(next.start);
-        }
-      }
+      expect(events.length).toBeGreaterThanOrEqual(4);
+      expect(events.length).toBeLessThanOrEqual(8);
     });
   });
 
@@ -237,7 +251,7 @@ describe('MockCalendarSource', () => {
   describe('unicité des IDs', () => {
     it('chaque event a un id unique dans la plage retournée', async () => {
       const events = await source.fetchEvents(FROM, TO);
-      const ids = events.map(e => e.id);
+      const ids = events.map((e) => e.id);
       const uniqueIds = new Set(ids);
 
       expect(uniqueIds.size).toBe(ids.length);
@@ -263,14 +277,15 @@ describe('MockCalendarSource', () => {
   });
 
   // -------------------------------------------------------------------------
-  // Cas limite — plage d'un seul jour
+  // Cas limite — plage d'un seul jour de travail
   // -------------------------------------------------------------------------
 
-  describe("fetchEvents avec plage d'un jour (from + 1 === to)", () => {
-    it("retourne des events pour une plage d'un seul jour", async () => {
-      const events = await source.fetchEvents('2026-04-20', '2026-04-21');
+  describe("fetchEvents avec plage d'un jour de travail (offset 1)", () => {
+    it("retourne exactement 1 event pour un jour TRAVAIL (Apr 14)", async () => {
+      // Apr 14 = offset 1 depuis ancre Apr 13 → Shift Jour
+      const events = await source.fetchEvents(DAY_TRAVAIL, DAY_NUIT);
 
-      expect(events.length).toBeGreaterThan(0);
+      expect(events.length).toBe(1);
     });
   });
 
@@ -286,8 +301,6 @@ describe('MockCalendarSource', () => {
     });
 
     it('la signature fetchEvents(from: string, to: string) est respectée', async () => {
-      // TypeScript garantit ceci à la compilation.
-      // On s'assure que l'appel ne lève pas d'exception à runtime.
       await expect(source.fetchEvents(FROM, TO)).resolves.toBeDefined();
     });
   });
