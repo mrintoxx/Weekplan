@@ -22,6 +22,11 @@ export function instantiateTemplate(
   events: CalendarEvent[],
   idGenerator: () => string = () => crypto.randomUUID(),
 ): BlockInstance[] {
+  if (!dayjs(date).isValid()) {
+    logger.warn('instantiateTemplate: invalid date, skipping', { templateId: template.id, date });
+    return [];
+  }
+
   const instances: BlockInstance[] = [];
 
   for (const block of template.blocks) {
