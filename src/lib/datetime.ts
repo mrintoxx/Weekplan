@@ -1,4 +1,5 @@
 import dayjs, { type Dayjs } from 'dayjs';
+import type { BlockInstance } from '@/types';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import 'dayjs/locale/fr';
@@ -51,4 +52,18 @@ export function splitAtMidnight(
     { start, end: midnightISO, segment: 'start' },
     { start: midnightISO, end, segment: 'end' },
   ];
+}
+
+export function splitInstanceForDay(
+  instance: BlockInstance,
+  date: string,
+): Array<{
+  id: string;
+  start: string;
+  end: string;
+  segment: 'start' | 'end' | 'single';
+}> {
+  return splitAtMidnight(instance.start, instance.end)
+    .filter((part) => dayjs(part.start).format('YYYY-MM-DD') === date)
+    .map((part) => ({ ...part, id: `${instance.id}#${part.segment}` }));
 }

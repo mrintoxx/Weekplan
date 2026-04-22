@@ -1,9 +1,13 @@
+import { WeekGrid, WeekNavBar, DayStrip } from '@/components/WeekView';
+
 export function App() {
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <h1 className="text-[var(--md-on-surface)] font-[var(--md-font-headline-lg)]">
-        Daily Block Planner
-      </h1>
+    <div className="flex flex-col h-screen bg-[var(--md-surface)] text-[var(--md-on-surface)] overflow-hidden">
+      <WeekNavBar />
+      <DayStrip />
+      <div className="flex-1 overflow-hidden">
+        <WeekGrid />
+      </div>
     </div>
   );
 }
