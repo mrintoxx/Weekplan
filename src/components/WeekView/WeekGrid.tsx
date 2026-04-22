@@ -1,5 +1,7 @@
+import { useMemo } from 'react';
 import dayjs from 'dayjs';
 import 'dayjs/locale/fr';
+import { useShallow } from 'zustand/react/shallow';
 import { useStore } from '@/store/useStore';
 import { HOUR_HEIGHT_PX } from '@/constants/grid';
 import { HourRows } from './HourRows';
@@ -16,12 +18,14 @@ export function WeekGrid() {
   const selectedWeekStart = useStore((s) => s.selectedWeekStart);
   const selectedDate = useStore((s) => s.selectedDate);
   const weekPlans = useStore((s) => s.weekPlans);
-  const getEventsForDay = useStore((s) => s.getEventsForDay);
+  const eventsByWeek = useStore(useShallow((s) => s.eventsByWeek));
 
   const weekPlan = weekPlans[selectedWeekStart];
   const days = getDaysOfWeek(selectedWeekStart);
   const todayStr = dayjs().format('YYYY-MM-DD');
   const gridHeight = 24 * HOUR_HEIGHT_PX;
+
+  const allEvents = useMemo(() => Object.values(eventsByWeek).flat(), [eventsByWeek]);
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -73,7 +77,14 @@ export function WeekGrid() {
           const dateStr = day.format('YYYY-MM-DD');
           const dayPlan = weekPlan?.days[dateStr];
           const instances = dayPlan?.instances ?? [];
-          const events = getEventsForDay(dateStr);
+          const d = dayjs(dateStr);
+          const dayStart = d.startOf('day').valueOf();
+          const dayEnd = d.endOf('day').valueOf();
+          const events = allEvents.filter((ev) => {
+            const evStart = new Date(ev.start).getTime();
+            const evEnd = new Date(ev.end).getTime();
+            return evStart < dayEnd && evEnd > dayStart;
+          });
           const isToday = dateStr === todayStr;
 
           return (
