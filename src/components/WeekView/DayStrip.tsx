@@ -33,7 +33,7 @@ export function DayStrip() {
             role="tab"
             aria-selected={isSelected}
             aria-label={day.locale('fr').format('dddd D MMMM')}
-            onClick={() => setSelectedDate(dateStr)}
+            onClick={() => { setSelectedDate(dateStr); }}
             className={`flex flex-col items-center min-w-[36px] py-1 rounded-[var(--md-shape-full)] text-xs transition-colors ${
               isSelected
                 ? 'bg-[var(--md-primary)] text-[var(--md-on-primary)]'

@@ -76,7 +76,7 @@ export function computeLayout(items: LayoutItem[]): LayoutResult[] {
 
     // columnOccupants[col] = list of LayoutItem indices already placed in that column
     const columnOccupants: [number[], number[], number[]] = [[], [], []];
-    const assignedColumns: number[] = new Array(sorted.length).fill(0);
+    const assignedColumns = Array.from({ length: sorted.length }, () => 0);
 
     for (let si = 0; si < sorted.length; si++) {
       const idx = sorted[si];

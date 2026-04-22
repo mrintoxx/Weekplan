@@ -97,7 +97,7 @@ describe('computeLayout', () => {
     expect(result).toHaveLength(3);
     const columns = result.map((r) => r.column).sort((x, y) => x - y);
     expect(columns).toEqual([1, 2, 3]);
-    result.forEach((r) => expect(r.totalColumns).toBe(3));
+    result.forEach((r) => { expect(r.totalColumns).toBe(3); });
   });
 
   // -------------------------------------------------------------------------
@@ -113,7 +113,7 @@ describe('computeLayout', () => {
     ];
 
     // Act / Assert
-    expect(() => computeLayout(items)).toThrowError('Max 3 colonnes dépassé');
+    expect(() => computeLayout(items)).toThrow('Max 3 colonnes dépassé');
   });
 
   // -------------------------------------------------------------------------
@@ -240,7 +240,7 @@ describe('computeLayout', () => {
       item('d', 9, 10),   // chevauche b et c mais peut prendre col 1 si a libéré... non, a est 8-10
     ];
     // a, b, c, d se chevauchent tous à 09:00-10:00 → 4 items simultanés → throw
-    expect(() => computeLayout(items)).toThrowError('Max 3 colonnes dépassé');
+    expect(() => computeLayout(items)).toThrow('Max 3 colonnes dépassé');
   });
 
   it('assigne colonne 1 à un item normal seul quand il n\'y a pas de chevauchement avec un event dans un autre groupe', () => {
