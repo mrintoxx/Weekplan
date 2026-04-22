@@ -29,6 +29,7 @@ export default tseslint.config(
         'error',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
+      '@typescript-eslint/restrict-template-expressions': ['error', { allowNumber: true }],
     },
   },
   {

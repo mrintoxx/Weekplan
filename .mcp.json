@@ -6,11 +6,11 @@
     },
     "playwright": {
       "command": "npx",
-      "args": ["/c", "npx", "-y", "@playwright/mcp@latest"]
+      "args": ["-y", "@playwright/mcp"]
     },
     "chrome-devtools": {
       "command": "npx",
-      "args": ["/c", "npx", "-y", "chrome-devtools-mcp@latest"]
+      "args": ["-y", "@modelcontextprotocol/server-chrome-devtools"]
     }
   }
 }

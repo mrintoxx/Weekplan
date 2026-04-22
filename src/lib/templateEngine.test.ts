@@ -1,8 +1,13 @@
 // Stabilise les comparaisons de timezone dans tout ce fichier
 process.env['TZ'] = 'Europe/Paris';
 
-import { describe, it, expect } from 'vitest';
+import { vi, describe, it, expect, beforeEach } from 'vitest';
+import { logger } from '@/lib/logger';
 import { instantiateTemplate } from '@/lib/templateEngine';
+
+vi.mock('@/lib/logger', () => ({
+  logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
+}));
 import { DEFAULT_DAY_TEMPLATES } from '@/constants/templates';
 import { toAbsoluteISO } from '@/lib/datetime';
 import type { CalendarEvent, DayTemplate, BlockTemplate } from '@/types';
@@ -10,6 +15,8 @@ import type { CalendarEvent, DayTemplate, BlockTemplate } from '@/types';
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+beforeEach(() => { vi.clearAllMocks(); });
 
 function makeEvent(id: string, start: string, end: string): CalendarEvent {
   return { id, source: 'gcal', calendarId: 'test', title: 'Event', start, end };
@@ -217,6 +224,21 @@ describe('instantiateTemplate', () => {
       // Assert
       const renoInstance = result.find((i) => i.sourceTemplateId === 'off-reno-1');
       expect(renoInstance).toBeUndefined();
+    });
+
+    it('retourne [] et log un warning sur une date invalide', () => {
+      // Arrange
+      const events: CalendarEvent[] = [];
+
+      // Act
+      const result = instantiateTemplate(offTemplate, 'date-invalide-foo', events, makeCounter());
+
+      // Assert
+      expect(result).toEqual([]);
+      expect(logger.warn).toHaveBeenCalledWith(
+        'instantiateTemplate: invalid date, skipping',
+        { templateId: offTemplate.id, date: 'date-invalide-foo' },
+      );
     });
 
     it("bloc allowOverlap:true -> pose tel quel meme si chevauchement avec un event", () => {

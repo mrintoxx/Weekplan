@@ -1,17 +1,29 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
+
+vi.mock('@/store/persistence', () => ({
+  getWeekPlan: vi.fn().mockResolvedValue(undefined),
+  saveWeekPlan: vi.fn().mockResolvedValue(undefined),
+  getAllTemplates: vi.fn().mockResolvedValue([]),
+  saveTemplate: vi.fn().mockResolvedValue(undefined),
+  deleteTemplate: vi.fn().mockResolvedValue(undefined),
+}));
+
 import { App } from './App';
 
 describe('App', () => {
-  it('renders the application title', () => {
+  it('se rend sans erreur', () => {
     render(<App />);
-    const heading = screen.getByText('Daily Block Planner');
-    expect(heading).toBeInTheDocument();
+    expect(document.body).toBeTruthy();
   });
 
-  it('renders heading with correct tag', () => {
+  it('contient la barre de navigation semaine', () => {
     render(<App />);
-    const heading = screen.getByRole('heading', { level: 1 });
-    expect(heading).toHaveTextContent('Daily Block Planner');
+    expect(screen.getByRole('navigation', { name: /navigation semaine/i })).toBeInTheDocument();
+  });
+
+  it('contient la grille semaine avec role="grid"', () => {
+    render(<App />);
+    expect(screen.getByRole('grid')).toBeInTheDocument();
   });
 });
